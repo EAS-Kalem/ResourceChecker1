@@ -16,12 +16,12 @@ spec:
       containers:
       - name: cont2
         resources:
-            limits:
-              cpu: "2"
-              memory: 1Gi
-            requests:
-              cpu: 500m
-              memory: 500Mi
+          limits:
+            cpu: "2"
+            memory: 1Gi
+          requests:
+            cpu: 500m
+            memory: 500Mi
       initContainers:
       - name: init2
         resources:
