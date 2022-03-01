@@ -1,0 +1,11 @@
+{
+  "name": "kk_challenge-3",
+  "version": "1.0.0",
+  "description": "### Given two yaml files as inputs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
