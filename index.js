@@ -30,22 +30,14 @@ let totals = {
 
 let limitsTotal = {
     limits: {
-        cpu: 0,
-        memory: 0
+        cpu: docLimits.total.limits.cpu ,
+        memory: docLimits.total.limits.mem
     },
     requests: {
-        cpu: 0,
-        memory: 0
+        cpu: docLimits.total.request.cpu,
+        memory: docLimits.total.request.mem
     }
 }
-
-
-    limitsTotal.limits.cpu = docLimits.total.limits.cpu 
-    limitsTotal.limits.memory = docLimits.total.limits.mem
-    limitsTotal.requests.cpu = docLimits.total.request.cpu
-    limitsTotal.requests.memory = docLimits.total.request.mem
-
-
 
 for (let document in docResources) {
     for (let container in docResources[document].spec.template.spec.containers) {
@@ -68,3 +60,19 @@ for (let document in docResources) {
 console.log(totals)
 console.log(limitsTotal)
 
+function check(){
+if (totals.limits.cpu > limitsTotal.limits.cpu){
+    console.log('cpu limit too high')
+} 
+else if (totals.limits.memory > limitsTotal.limits.memory){
+    console.log('memory limit too high')
+} 
+else if (totals.requests.cpu > limitsTotal.requests.cpu){
+    console.log('cpu request too high')
+} 
+else if (totals.requests.memory > limitsTotal.requests.memory){
+    console.log('cpu memory too high')
+} else {console.log("Total minimum requirements OK!")}
+}
+
+check()
