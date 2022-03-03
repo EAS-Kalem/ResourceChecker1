@@ -107,6 +107,13 @@ for (let document in docResources) {
         totals.limits.memory += parseToInt(docResources[document].spec.template.spec.initcontainers[initcontainer].resources.limits.memory)
         totals.requests.memory += parseToInt(docResources[document].spec.template.spec.initcontainers[initcontainer].resources.requests.memory)
     }
+    for (let container in docResources[document].spec.template.spec.containers) {
+        totals.limits.cpu += parseToInt(docResources[document].spec.template.spec.containers[container].resources.limits.cpu)
+        totals.requests.cpu += parseToInt(docResources[document].spec.template.spec.containers[container].resources.requests.cpu)
+        totals.limits.memory += parseToInt(docResources[document].spec.template.spec.containers[container].resources.limits.memory)
+        totals.requests.memory += parseToInt(docResources[document].spec.template.spec.containers[container].resources.requests.memory)
+    }
+
 
 }
 console.log(totals)
@@ -115,20 +122,20 @@ console.log(individualContainers)
 
 function check() {
     if (totals.limits.cpu > limitsTotal.limits.cpu) {
-        var a = total.limits.cpu - limitsTotal.limits.cpu
-        console.log("CPU limit is" + a.value + "too high")
+        var a = totals.limits.cpu - limitsTotal.limits.cpu
+        console.log("CPU limit is" + a + "too high")
     }
     else if (totals.limits.memory > limitsTotal.limits.memory) {
-        var b = total.limits.memory - limitsTotal.limits.memory
-        console.log("Memory limit is" + b.value + "too high")
+        var b = totals.limits.memory - limitsTotal.limits.memory
+        console.log("Memory limit is" + b + "too high")
     }
     else if (totals.requests.cpu > limitsTotal.requests.cpu) {
-        var c = total.requests.cpu - limitsTotal.requests.cpu
-        console.log("CPU request is" + c.value + "too high")
+        var c = totals.requests.cpu - limitsTotal.requests.cpu
+        console.log("CPU request is" + c + "too high")
     }
     else if (totals.requests.memory > limitsTotal.requests.memory) {
-        var d = total.requests.memory - limitsTotal.requests.memory
-        console.log("Memory is" + d.value + "too high")
+        var d = totals.requests.memory - limitsTotal.requests.memory
+        console.log("Memory is" + d + "too high")
     } 
     else { console.log("Total minimum requirements OK!") }
 }
