@@ -87,22 +87,17 @@ for (let document in docResources) {
             }
         }
 
-        // add to namespace
         individualContainers[docResources[document].metadata.namespace].totals.limits.cpu += limCpu
         individualContainers[docResources[document].metadata.namespace].totals.requests.cpu += reqCpu
         individualContainers[docResources[document].metadata.namespace].totals.limits.mem += limMem
         individualContainers[docResources[document].metadata.namespace].totals.requests.mem += reqMem
 
-        // add to containers in a namespace
 
-
-        // add to TOTALS
         totals.limits.cpu += limCpu
         totals.requests.cpu += reqCpu
         totals.limits.memory += limMem
         totals.requests.memory += reqMem
 
-        // docResources[document].spec.template.spec.containers.forEach(container => individualContainers.push(container));
 
 
     }
@@ -120,16 +115,21 @@ console.log(individualContainers)
 
 function check() {
     if (totals.limits.cpu > limitsTotal.limits.cpu) {
-        console.log('cpu limit too high')
+        var a = total.limits.cpu - limitsTotal.limits.cpu
+        console.log("CPU limit is" + a.value + "too high")
     }
     else if (totals.limits.memory > limitsTotal.limits.memory) {
-        console.log('memory limit too high')
+        var b = total.limits.memory - limitsTotal.limits.memory
+        console.log("Memory limit is" + b.value + "too high")
     }
     else if (totals.requests.cpu > limitsTotal.requests.cpu) {
-        console.log('cpu request too high')
+        var c = total.requests.cpu - limitsTotal.requests.cpu
+        console.log("CPU request is" + c.value + "too high")
     }
     else if (totals.requests.memory > limitsTotal.requests.memory) {
-        console.log('cpu memory too high')
-    } else { console.log("Total minimum requirements OK!") }
+        var d = total.requests.memory - limitsTotal.requests.memory
+        console.log("Memory is" + d.value + "too high")
+    } 
+    else { console.log("Total minimum requirements OK!") }
 }
 check()
