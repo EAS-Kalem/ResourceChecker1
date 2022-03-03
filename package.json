@@ -4,7 +4,8 @@
   "description": "### Given two yaml files as inputs",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "check": "npx resource-checker -l limits.yaml -r resources.yaml"
   },
   "author": "",
   "license": "ISC",

@@ -4,6 +4,8 @@ const YAML = require("js-yaml");
 const docLimits = yaml.load(fs.readFileSync('limits.yaml'));
 const docResources = YAML.loadAll(fs.readFileSync('resources.yaml'));
 
+
+  
 const parseToInt = (string) => {
     if (string.includes('m')) {
         return +string.substring(0, string.length - 1) / 1000
@@ -107,12 +109,7 @@ for (let document in docResources) {
         totals.limits.memory += parseToInt(docResources[document].spec.template.spec.initcontainers[initcontainer].resources.limits.memory)
         totals.requests.memory += parseToInt(docResources[document].spec.template.spec.initcontainers[initcontainer].resources.requests.memory)
     }
-    for (let container in docResources[document].spec.template.spec.containers) {
-        totals.limits.cpu += parseToInt(docResources[document].spec.template.spec.containers[container].resources.limits.cpu)
-        totals.requests.cpu += parseToInt(docResources[document].spec.template.spec.containers[container].resources.requests.cpu)
-        totals.limits.memory += parseToInt(docResources[document].spec.template.spec.containers[container].resources.limits.memory)
-        totals.requests.memory += parseToInt(docResources[document].spec.template.spec.containers[container].resources.requests.memory)
-    }
+    
 
 
 }
@@ -123,19 +120,19 @@ console.log(individualContainers)
 function check() {
     if (totals.limits.cpu > limitsTotal.limits.cpu) {
         var a = totals.limits.cpu - limitsTotal.limits.cpu
-        console.log("CPU limit is" + a + "too high")
+        console.log("CPU limit is " + a + " CPU too high")
     }
     else if (totals.limits.memory > limitsTotal.limits.memory) {
         var b = totals.limits.memory - limitsTotal.limits.memory
-        console.log("Memory limit is" + b + "too high")
+        console.log("Memory limit is " + b + " too high")
     }
     else if (totals.requests.cpu > limitsTotal.requests.cpu) {
         var c = totals.requests.cpu - limitsTotal.requests.cpu
-        console.log("CPU request is" + c + "too high")
+        console.log("CPU request is " + c + " CPU too high")
     }
     else if (totals.requests.memory > limitsTotal.requests.memory) {
         var d = totals.requests.memory - limitsTotal.requests.memory
-        console.log("Memory is" + d + "too high")
+        console.log("Memory is " + d + " too high")
     } 
     else { console.log("Total minimum requirements OK!") }
 }
