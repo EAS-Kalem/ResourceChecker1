@@ -4,8 +4,25 @@ const YAML = require("js-yaml");
 const docLimits = yaml.load(fs.readFileSync('limits.yaml'));
 const docResources = YAML.loadAll(fs.readFileSync('resources.yaml'));
 
+var value = 0;
+switch (value) {
+    case 0:
+        console.log("Main Menu");
+        break;
 
-  
+    case 1:
+        console.log("Check a namespace individual containers");
+        break;
+
+    case 2:
+        console.log("Check total CPU & Memory against total limits");
+        break;
+
+    default:
+        console.log('default');
+}
+
+
 const parseToInt = (string) => {
     if (string.includes('m')) {
         return +string.substring(0, string.length - 1) / 1000
@@ -109,7 +126,7 @@ for (let document in docResources) {
         totals.limits.memory += parseToInt(docResources[document].spec.template.spec.initcontainers[initcontainer].resources.limits.memory)
         totals.requests.memory += parseToInt(docResources[document].spec.template.spec.initcontainers[initcontainer].resources.requests.memory)
     }
-    
+
 
 
 }
@@ -133,7 +150,7 @@ function check() {
     else if (totals.requests.memory > limitsTotal.requests.memory) {
         var d = totals.requests.memory - limitsTotal.requests.memory
         console.log("Memory is " + d + " too high")
-    } 
+    }
     else { console.log("Total minimum requirements OK!") }
 }
 check()
