@@ -1,26 +1,28 @@
 const fs = require("fs");
 const yaml = require("js-yaml");
 const YAML = require("js-yaml");
-const docLimits = yaml.load(fs.readFileSync('limits.yaml'));
-const docResources = YAML.loadAll(fs.readFileSync('resources.yaml'));
+const myArgs = process.argv.slice(2);
+console.log('myArgs: ', myArgs);
+const docLimits = yaml.load(fs.readFileSync(myArgs[0])); 
 
-var value = 0;
-switch (value) {
-    case 0:
-        console.log("Main Menu");
-        break;
+const docResources = YAML.loadAll(fs.readFileSync(myArgs[1]));
 
-    case 1:
-        console.log("Check a namespace individual containers");
-        break;
 
-    case 2:
-        console.log("Check total CPU & Memory against total limits");
-        break;
 
-    default:
-        console.log('default');
-}
+console.log('myArgs: ', myArgs);
+
+let test = [
+    {
+        will: "you",
+        get: {
+            this: [{one: "though?"}]
+        }
+    }
+]
+
+        console.log(test[0].get.this[0].one)
+  
+
 
 
 const parseToInt = (string) => {
@@ -63,6 +65,42 @@ let individualContainers = {
 }
 
 for (let document in docResources) {
+    if (!individualContainers[docResources[document].metadata.namespace]) {
+        individualContainers[docResources[document].metadata.namespace] = {
+            totals: {
+                limits: {
+                    cpu: 0,
+                    memory: 0
+                },
+                requests: {
+                    cpu: 0,
+                    memory: 0
+                }
+             },
+             containers: {
+                 limits: {
+                     cpu: 0,
+                     memory: 0
+                 },
+                  requests: {
+                      cpu: 0,
+                     memory: 0
+                 }
+             },
+            initContainers: {
+                limits: {
+                    cpu: 0,
+                    memory: 0
+                },
+                requests: {
+                    cpu: 0,
+                    memory: 0
+                }
+            }
+
+        }
+    }
+
     for (let container in docResources[document].spec.template.spec.containers) {
 
         let limCpu = parseToInt(docResources[document].spec.template.spec.containers[container].resources.limits.cpu)
@@ -70,87 +108,90 @@ for (let document in docResources) {
         let limMem = parseToInt(docResources[document].spec.template.spec.containers[container].resources.limits.memory)
         let reqMem = parseToInt(docResources[document].spec.template.spec.containers[container].resources.requests.memory)
 
-        if (!individualContainers[docResources[document].metadata.namespace]) {
-            individualContainers[docResources[document].metadata.namespace] = {
-                totals: {
-                    limits: {
-                        cpu: 0,
-                        memory: 0
-                    },
-                    requests: {
-                        cpu: 0,
-                        memory: 0
-                    }
-                },
-                containers: {
-                    limits: {
-                        cpu: 0,
-                        memory: 0
-                    },
-                    requests: {
-                        cpu: 0,
-                        memory: 0
-                    }
-                },
-                initcontainers: {
-                    limits: {
-                        cpu: 0,
-                        memory: 0
-                    },
-                    requests: {
-                        cpu: 0,
-                        memory: 0
-                    }
-                }
-
-            }
-        }
-
+        
+//namespace totals
         individualContainers[docResources[document].metadata.namespace].totals.limits.cpu += limCpu
         individualContainers[docResources[document].metadata.namespace].totals.requests.cpu += reqCpu
         individualContainers[docResources[document].metadata.namespace].totals.limits.mem += limMem
         individualContainers[docResources[document].metadata.namespace].totals.requests.mem += reqMem
 
-
+//total totals
         totals.limits.cpu += limCpu
         totals.requests.cpu += reqCpu
         totals.limits.memory += limMem
         totals.requests.memory += reqMem
+        
+//namespace container totals
+        individualContainers[docResources[document].metadata.namespace].containers.limits.cpu += limCpu
+        individualContainers[docResources[document].metadata.namespace].containers.requests.cpu += reqCpu
+        individualContainers[docResources[document].metadata.namespace].containers.limits.mem += limMem
+        individualContainers[docResources[document].metadata.namespace].containers.requests.mem += reqMem
 
 
 
     }
-    for (let initcontainer in docResources[document].spec.template.spec.initcontainers) {
-        totals.limits.cpu += parseToInt(docResources[document].spec.template.spec.initcontainers[initcontainer].resources.limits.cpu)
-        totals.requests.cpu += parseToInt(docResources[document].spec.template.spec.initcontainers[initcontainer].resources.requests.cpu)
-        totals.limits.memory += parseToInt(docResources[document].spec.template.spec.initcontainers[initcontainer].resources.limits.memory)
-        totals.requests.memory += parseToInt(docResources[document].spec.template.spec.initcontainers[initcontainer].resources.requests.memory)
-    }
+    for (let initcontainer in docResources[document].spec.template.spec.initContainers) {
+      let limCpu = parseToInt(docResources[document].spec.template.spec.initContainers[initcontainer].resources.limits.cpu)
+        let reqCpu = parseToInt(docResources[document].spec.template.spec.initContainers[initcontainer].resources.requests.cpu)
+        let limMem = parseToInt(docResources[document].spec.template.spec.initContainers[initcontainer].resources.limits.memory)
+        let reqMem = parseToInt(docResources[document].spec.template.spec.initContainers[initcontainer].resources.requests.memory)
 
+        
+//namespace totals
+        individualContainers[docResources[document].metadata.namespace].totals.limits.cpu += limCpu
+        individualContainers[docResources[document].metadata.namespace].totals.requests.cpu += reqCpu
+        individualContainers[docResources[document].metadata.namespace].totals.limits.mem += limMem
+        individualContainers[docResources[document].metadata.namespace].totals.requests.mem += reqMem
+
+//total totals
+        totals.limits.cpu += limCpu
+        totals.requests.cpu += reqCpu
+        totals.limits.memory += limMem
+        totals.requests.memory += reqMem
+        
+//namespace container totals
+        individualContainers[docResources[document].metadata.namespace].initContainers.limits.cpu += limCpu
+        individualContainers[docResources[document].metadata.namespace].initContainers.requests.cpu += reqCpu
+        individualContainers[docResources[document].metadata.namespace].initContainers.limits.mem += limMem
+        individualContainers[docResources[document].metadata.namespace].initContainers.requests.mem += reqMem
+
+
+
+    }
+    
+   
 
 
 }
 console.log(totals)
 console.log(limitsTotal)
-console.log(individualContainers)
+console.log(JSON.stringify(individualContainers, null, 2))
 
 function check() {
     if (totals.limits.cpu > limitsTotal.limits.cpu) {
         var a = totals.limits.cpu - limitsTotal.limits.cpu
         console.log("CPU limit is " + a + " CPU too high")
+        process.exit(1)
     }
     else if (totals.limits.memory > limitsTotal.limits.memory) {
         var b = totals.limits.memory - limitsTotal.limits.memory
         console.log("Memory limit is " + b + " too high")
+        process.exit(1)
     }
     else if (totals.requests.cpu > limitsTotal.requests.cpu) {
         var c = totals.requests.cpu - limitsTotal.requests.cpu
         console.log("CPU request is " + c + " CPU too high")
+        process.exit(1)
     }
     else if (totals.requests.memory > limitsTotal.requests.memory) {
         var d = totals.requests.memory - limitsTotal.requests.memory
         console.log("Memory is " + d + " too high")
+        process.exit(1)
     }
-    else { console.log("Total minimum requirements OK!") }
+    else { console.log("Total minimum requirements OK!") 
+    process.exit(0)}
 }
 check()
+
+
+  
