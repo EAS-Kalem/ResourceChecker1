@@ -7,6 +7,48 @@ console.log('myArgs: ', myArgs);
 const docLimits = yaml.load(fs.readFileSync(myArgs[0]));
 const docResources = YAML.loadAll(fs.readFileSync(myArgs[1]));
 
+//Convert Data Type
+const parseToInt = (string) => {
+    if (string.includes('m')) {
+        return +string.substring(0, string.length - 1) / 1000
+    }
+    if (string.includes('Gi')) {
+        return +string.substring(0, string.length - 2) * 2000
+    }
+    if (string.includes('Mi')) {
+        return +string.substring(0, string.length - 2)
+    }
+    return +string.substring(0, string.length)
+}
+
+//Check Function
+function check() {
+    if (totalResources.limits.cpu > totalLimits.limits.cpu) {
+        var a = totalResources.limits.cpu - totalLimits.limits.cpu
+        console.log("CPU limit is " + a + " CPU too high")
+        process.exit(1)
+    }
+    else if (totalResources.limits.memory > totalLimits.limits.memory) {
+        var b = totalResources.limits.memory - totalLimits.limits.memory
+        console.log("Memory limit is " + b + " too high")
+        process.exit(1)
+    }
+    else if (totalR.requests.cpu > totalLimits.requests.cpu) {
+        var c = totalResources.requests.cpu - totalLimits.requests.cpu
+        console.log("CPU request is " + c + " CPU too high")
+        process.exit(1)
+    }
+    else if (totalR.requests.memory > totalLimits.requests.memory) {
+        var d = totalResources.requests.memory - totalLimits.requests.memory
+        console.log("Memory is " + d + " too high")
+        process.exit(1)
+    }
+    else {
+        console.log("Total minimum requirements OK!")
+        process.exit(0)
+    }
+}
+
 //Total Resources
 let totalResources = {
     limits: {
@@ -135,46 +177,4 @@ console.log(individualContainers)
 console.log(individualContainers.namespace1)
 console.log(individualContainers.namespace2)
 
-
-//Convert Data Type
-const parseToInt = (string) => {
-    if (string.includes('m')) {
-        return +string.substring(0, string.length - 1) / 1000
-    }
-    if (string.includes('Gi')) {
-        return +string.substring(0, string.length - 2) * 2000
-    }
-    if (string.includes('Mi')) {
-        return +string.substring(0, string.length - 2)
-    }
-    return +string.substring(0, string.length)
-}
-
-//Check Function
-function check() {
-    if (totalResources.limits.cpu > totalLimits.limits.cpu) {
-        var a = totalResources.limits.cpu - totalLimits.limits.cpu
-        console.log("CPU limit is " + a + " CPU too high")
-        process.exit(1)
-    }
-    else if (totalResources.limits.memory > totalLimits.limits.memory) {
-        var b = totalResources.limits.memory - totalLimits.limits.memory
-        console.log("Memory limit is " + b + " too high")
-        process.exit(1)
-    }
-    else if (totalR.requests.cpu > totalLimits.requests.cpu) {
-        var c = totalResources.requests.cpu - totalLimits.requests.cpu
-        console.log("CPU request is " + c + " CPU too high")
-        process.exit(1)
-    }
-    else if (totalR.requests.memory > totalLimits.requests.memory) {
-        var d = totalResources.requests.memory - totalLimits.requests.memory
-        console.log("Memory is " + d + " too high")
-        process.exit(1)
-    }
-    else {
-        console.log("Total minimum requirements OK!")
-        process.exit(0)
-    }
-}
 check()

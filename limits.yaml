@@ -1,5 +1,5 @@
 total:
-  limits:
+  limit:
     cpu: 5.5
     mem: 5120
   request:
