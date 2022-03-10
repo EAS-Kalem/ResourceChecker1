@@ -73,11 +73,11 @@ let totalLimits = {
     }
 };
 
-//Each Container
-let individualContainers = {}
+//Each Namespace Resources
+let individualContainersRes = {}
 for (let document in docResources) {
-    if (!individualContainers[docResources[document].metadata.namespace]) {
-        individualContainers[docResources[document].metadata.namespace] = {
+    if (!individualContainersRes[docResources[document].metadata.namespace]) {
+        individualContainersRes[docResources[document].metadata.namespace] = {
             totals: {
                 limits: {
                     cpu: 0,
@@ -118,10 +118,10 @@ for (let document in docResources) {
         let limMem = parseToInt(docResources[document].spec.template.spec.containers[container].resources.limits.memory)
         let reqMem = parseToInt(docResources[document].spec.template.spec.containers[container].resources.requests.memory)
 
-        individualContainers[docResources[document].metadata.namespace].totals.limits.cpu += limCpu
-        individualContainers[docResources[document].metadata.namespace].totals.requests.cpu += reqCpu
-        individualContainers[docResources[document].metadata.namespace].totals.limits.memory += limMem
-        individualContainers[docResources[document].metadata.namespace].totals.requests.memory += reqMem
+        individualContainersRes[docResources[document].metadata.namespace].totals.limits.cpu += limCpu
+        individualContainersRes[docResources[document].metadata.namespace].totals.requests.cpu += reqCpu
+        individualContainersRes[docResources[document].metadata.namespace].totals.limits.memory += limMem
+        individualContainersRes[docResources[document].metadata.namespace].totals.requests.memory += reqMem
 
         totalResources.limits.cpu += limCpu
         totalResources.requests.cpu += reqCpu
@@ -135,10 +135,10 @@ for (let document in docResources) {
         let limMem = parseToInt(docResources[document].spec.template.spec.containers[initContainer].resources.limits.memory)
         let reqMem = parseToInt(docResources[document].spec.template.spec.containers[initContainer].resources.requests.memory)
 
-        individualContainers[docResources[document].metadata.namespace].totals.limits.cpu += limCpu
-        individualContainers[docResources[document].metadata.namespace].totals.requests.cpu += reqCpu
-        individualContainers[docResources[document].metadata.namespace].totals.limits.memory += limMem
-        individualContainers[docResources[document].metadata.namespace].totals.requests.memory += reqMem
+        individualContainersRes[docResources[document].metadata.namespace].totals.limits.cpu += limCpu
+        individualContainersRes[docResources[document].metadata.namespace].totals.requests.cpu += reqCpu
+        individualContainersRes[docResources[document].metadata.namespace].totals.limits.memory += limMem
+        individualContainersRes[docResources[document].metadata.namespace].totals.requests.memory += reqMem
 
         totalResources.limits.cpu += limCpu
         totalResources.requests.cpu += reqCpu
@@ -150,31 +150,104 @@ for (let document in docResources) {
 console.log(totalResources)
 console.log(totalLimits)
 
+//Each Namespace Limits
+let individualContainersLim = {}
+for (let document in docLimits) {
+    if (!individualContainersLim[docLimits[document].namespace]) {
+        individualContainersLim[docLimits[document].namespace] = {
+            totals: {
+                limits: {
+                    cpu: 0,
+                    memory: 0
+                },
+                requests: {
+                    cpu: 0,
+                    memory: 0
+                }
+            },
+            containers: {
+                limits: {
+                    cpu: 0,
+                    memory: 0
+                },
+                requests: {
+                    cpu: 0,
+                    memory: 0
+                }
+            },
+            initContainers: {
+                limits: {
+                    cpu: 0,
+                    memory: 0
+                },
+                requests: {
+                    cpu: 0,
+                    memory: 0
+                }
+            }
 
-
-for (let document in docResources) {
-    for (let container in docResources[document].spec.template.spec.containers) {
-        individualContainers[docResources[document].metadata.namespace].containers.limits.cpu += parseToInt(docResources[document].spec.template.spec.containers[container].resources.limits.cpu)
-        individualContainers[docResources[document].metadata.namespace].containers.requests.cpu += parseToInt(docResources[document].spec.template.spec.containers[container].resources.requests.cpu)
-        individualContainers[docResources[document].metadata.namespace].containers.limits.memory += parseToInt(docResources[document].spec.template.spec.containers[container].resources.limits.memory)
-        individualContainers[docResources[document].metadata.namespace].containers.requests.memory += parseToInt(docResources[document].spec.template.spec.containers[container].resources.requests.memory)
+        }
     }
-    for (let initContainer in docResources[document].spec.template.spec.initContainers) {
-        individualContainers[docResources[document].metadata.namespace].initContainers.limits.cpu += parseToInt(docResources[document].spec.template.spec.initContainers[initContainer].resources.limits.cpu)
-        individualContainers[docResources[document].metadata.namespace].initContainers.requests.cpu += parseToInt(docResources[document].spec.template.spec.initContainers[initContainer].resources.requests.cpu)
-        individualContainers[docResources[document].metadata.namespace].initContainers.limits.memory += parseToInt(docResources[document].spec.template.spec.initContainers[initContainer].resources.limits.memory)
-        individualContainers[docResources[document].metadata.namespace].initContainers.requests.memory += parseToInt(docResources[document].spec.template.spec.initContainers[initContainer].resources.requests.memory)
+    for (let container in docLimits.namespace) {
+        let limCpu = parseToInt(docLimits.namespace[container].containers.limits.cpu)
+        let reqCpu = parseToInt(docLimits.namespace[container].template.containers[container].resources.requests.cpu)
+        let limMem = parseToInt(docLimits.namespace[container].template.containers[container].resources.limits.memory)
+        let reqMem = parseToInt(docLimits.namespace[container].template.spec.containers[container].resources.requests.memory)
+
+        individualContainersLim[docLimits.metadata.namespace].totals.limits.cpu += limCpu
+        individualContainersLim[docLimits.metadata.namespace].totals.requests.cpu += reqCpu
+        individualContainersLim[docLimits.metadata.namespace].totals.limits.memory += limMem
+        individualContainersLim[docLimits.metadata.namespace].totals.requests.memory += reqMem
+
+        //totalResources.limits.cpu += limCpu
+        //totalResources.requests.cpu += reqCpu
+        //totalResources.limits.memory += limMem
+        //totalResources.requests.memory += reqMem
+    }
+
+    for (let initContainer in docLimits.namespace) {
+        let limCpu = parseToInt(docLimits.spec.template.spec.containers[initContainer].resources.limits.cpu)
+        let reqCpu = parseToInt(docLimits.spec.template.spec.containers[initContainer].resources.requests.cpu)
+        let limMem = parseToInt(docLimits.spec.template.spec.containers[initContainer].resources.limits.memory)
+        let reqMem = parseToInt(docLimits.spec.template.spec.containers[initContainer].resources.requests.memory)
+
+        individualContainersLim[docLimits.metadata.namespace].totals.limits.cpu += limCpu
+        individualContainersLim[docLimits.metadata.namespace].totals.requests.cpu += reqCpu
+        individualContainersLim[docLimits.metadata.namespace].totals.limits.memory += limMem
+        individualContainersLim[docLimits.metadata.namespace].totals.requests.memory += reqMem
+
+        //totalResources.limits.cpu += limCpu
+        //totalResources.requests.cpu += reqCpu
+        //totalResources.limits.memory += limMem
+        //totalResources.requests.memory += reqMem
     }
 }
 
-for (let namespace in docLimits) {
+
+
+for (let document in docLimits) {
+    for (let container in docLimits[document].spec.template.spec.containers) {
+        individualContainersLim[docLimits[document].metadata.namespace].containers.limits.cpu += parseToInt(docLimits[document].spec.template.spec.containers[container].resources.limits.cpu)
+        individualContainersLim[docLimits[document].metadata.namespace].containers.requests.cpu += parseToInt(docLimits[document].spec.template.spec.containers[container].resources.requests.cpu)
+        individualContainersLim[docLimits[document].metadata.namespace].containers.limits.memory += parseToInt(docLimits[document].spec.template.spec.containers[container].resources.limits.memory)
+        individualContainersLim[docLimits[document].metadata.namespace].containers.requests.memory += parseToInt(docLimits[document].spec.template.spec.containers[container].resources.requests.memory)
+    }
+    for (let initContainer in docLimits[document].spec.template.spec.initContainers) {
+        individualContainersLim[docLimits[document].metadata.namespace].initContainers.limits.cpu += parseToInt(docLimits[document].spec.template.spec.initContainers[initContainer].resources.limits.cpu)
+        individualContainersLim[docLimits[document].metadata.namespace].initContainers.requests.cpu += parseToInt(docLimits[document].spec.template.spec.initContainers[initContainer].resources.requests.cpu)
+        individualContainersLim[docLimits[document].metadata.namespace].initContainers.limits.memory += parseToInt(docLimits[document].spec.template.spec.initContainers[initContainer].resources.limits.memory)
+        individualContainersLim[docLimits[document].metadata.namespace].initContainers.requests.memory += parseToInt(docLimits[document].spec.template.spec.initContainers[initContainer].resources.requests.memory)
+    }
+}
+
+for (let namespace in docLimits.namespace) {
 
 
 
 
 }
-console.log(individualContainers)
-console.log(individualContainers.namespace1)
-console.log(individualContainers.namespace2)
+console.log(individualContainersRec)
+console.log(individualContainersRec.namespace1)
+console.log(individualContainersRec.namespace2)
 
 check()
