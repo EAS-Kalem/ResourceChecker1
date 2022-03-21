@@ -1,4 +1,5 @@
 const fs = require("fs");
+const { METHODS } = require("http");
 const yaml = require("js-yaml");
 const YAML = require("js-yaml");
 const resourceChecker = require("resource-checker");
@@ -13,40 +14,12 @@ const parseToInt = (string) => {
         return +string.substring(0, string.length - 1) / 1000
     }
     if (string.includes('Gi')) {
-        return +string.substring(0, string.length - 2) * 2000
+        return +string.substring(0, string.length - 2) * 1000
     }
     if (string.includes('Mi')) {
         return +string.substring(0, string.length - 2)
     }
     return +string.substring(0, string.length)
-}
-
-//Check Function
-function check() {
-    if (totalResources.limits.cpu > totalLimits.limits.cpu) {
-        var a = totalResources.limits.cpu - totalLimits.limits.cpu
-        console.log("CPU limit is " + a + " CPU too high")
-        process.exit(1)
-    }
-    else if (totalResources.limits.memory > totalLimits.limits.memory) {
-        var b = totalResources.limits.memory - totalLimits.limits.memory
-        console.log("Memory limit is " + b + " too high")
-        process.exit(1)
-    }
-    else if (totalR.requests.cpu > totalLimits.requests.cpu) {
-        var c = totalResources.requests.cpu - totalLimits.requests.cpu
-        console.log("CPU request is " + c + " CPU too high")
-        process.exit(1)
-    }
-    else if (totalR.requests.memory > totalLimits.requests.memory) {
-        var d = totalResources.requests.memory - totalLimits.requests.memory
-        console.log("Memory is " + d + " too high")
-        process.exit(1)
-    }
-    else {
-        console.log("Total minimum requirements OK!")
-        process.exit(0)
-    }
 }
 
 //Total Resources
@@ -72,6 +45,8 @@ let totalLimits = {
         memory: docLimits.total.request.mem
     }
 };
+
+//Check Function
 
 //Each Namespace Resources
 let individualContainersRes = {}
@@ -123,23 +98,33 @@ for (let document in docResources) {
         individualContainersRes[docResources[document].metadata.namespace].totals.limits.memory += limMem
         individualContainersRes[docResources[document].metadata.namespace].totals.requests.memory += reqMem
 
+        individualContainersRes[docResources[document].metadata.namespace].containers.limits.cpu += parseToInt(docResources[document].spec.template.spec.containers[container].resources.limits.cpu)
+        individualContainersRes[docResources[document].metadata.namespace].containers.requests.cpu += parseToInt(docResources[document].spec.template.spec.containers[container].resources.requests.cpu)
+        individualContainersRes[docResources[document].metadata.namespace].containers.limits.memory += parseToInt(docResources[document].spec.template.spec.containers[container].resources.limits.memory)
+        individualContainersRes[docResources[document].metadata.namespace].containers.requests.memory += parseToInt(docResources[document].spec.template.spec.containers[container].resources.requests.memory)
+
         totalResources.limits.cpu += limCpu
         totalResources.requests.cpu += reqCpu
         totalResources.limits.memory += limMem
         totalResources.requests.memory += reqMem
     }
 
-    for (let initContainer in docResources[document].spec.template.spec.containers) {
-        let limCpu = parseToInt(docResources[document].spec.template.spec.containers[initContainer].resources.limits.cpu)
-        let reqCpu = parseToInt(docResources[document].spec.template.spec.containers[initContainer].resources.requests.cpu)
-        let limMem = parseToInt(docResources[document].spec.template.spec.containers[initContainer].resources.limits.memory)
-        let reqMem = parseToInt(docResources[document].spec.template.spec.containers[initContainer].resources.requests.memory)
+    for (let initContainer in docResources[document].spec.template.spec.initContainers) {
+        let limCpu = parseToInt(docResources[document].spec.template.spec.initContainers[initContainer].resources.limits.cpu)
+        let reqCpu = parseToInt(docResources[document].spec.template.spec.initContainers[initContainer].resources.requests.cpu)
+        let limMem = parseToInt(docResources[document].spec.template.spec.initContainers[initContainer].resources.limits.memory)
+        let reqMem = parseToInt(docResources[document].spec.template.spec.initContainers[initContainer].resources.requests.memory)
 
         individualContainersRes[docResources[document].metadata.namespace].totals.limits.cpu += limCpu
         individualContainersRes[docResources[document].metadata.namespace].totals.requests.cpu += reqCpu
         individualContainersRes[docResources[document].metadata.namespace].totals.limits.memory += limMem
         individualContainersRes[docResources[document].metadata.namespace].totals.requests.memory += reqMem
 
+        individualContainersRes[docResources[document].metadata.namespace].initContainers.limits.cpu += parseToInt(docResources[document].spec.template.spec.initContainers[initContainer].resources.limits.cpu)
+        individualContainersRes[docResources[document].metadata.namespace].initContainers.requests.cpu += parseToInt(docResources[document].spec.template.spec.initContainers[initContainer].resources.requests.cpu)
+        individualContainersRes[docResources[document].metadata.namespace].initContainers.limits.memory += parseToInt(docResources[document].spec.template.spec.initContainers[initContainer].resources.limits.memory)
+        individualContainersRes[docResources[document].metadata.namespace].initContainers.requests.memory += parseToInt(docResources[document].spec.template.spec.initContainers[initContainer].resources.requests.memory)
+
         totalResources.limits.cpu += limCpu
         totalResources.requests.cpu += reqCpu
         totalResources.limits.memory += limMem
@@ -147,107 +132,100 @@ for (let document in docResources) {
     }
 }
 
-console.log(totalResources)
-console.log(totalLimits)
-
-//Each Namespace Limits
-let individualContainersLim = {}
-for (let document in docLimits) {
-    if (!individualContainersLim[docLimits[document].namespace]) {
-        individualContainersLim[docLimits[document].namespace] = {
-            totals: {
-                limits: {
-                    cpu: 0,
-                    memory: 0
-                },
-                requests: {
-                    cpu: 0,
-                    memory: 0
-                }
-            },
-            containers: {
-                limits: {
-                    cpu: 0,
-                    memory: 0
-                },
-                requests: {
-                    cpu: 0,
-                    memory: 0
-                }
-            },
-            initContainers: {
-                limits: {
-                    cpu: 0,
-                    memory: 0
-                },
-                requests: {
-                    cpu: 0,
-                    memory: 0
-                }
-            }
-
+//check function for container, initContainer and totals
+function check() {
+    console.log("~~~~~~~~~~~~~~~~~~~~STARTING RESOURCE CHECK~~~~~~~~~~~~~~~~~~~~")
+    //each namespace
+    for (let namespaceRes in individualContainersRes) {
+        console.log("Checking " + namespaceRes)
+        if (docLimits.namespace[namespaceRes].containers.limit.cpu < individualContainersRes[namespaceRes].containers.limits.cpu) {
+            var a = individualContainersRes[namespaceRes].containers.limits.cpu - docLimits.namespace[namespaceRes].containers.limit.cpu
+            console.log("CPU limit is " + a + " too high")
+            process.exit(1)
+        }
+        else if (docLimits.namespace[namespaceRes].containers.limit.mem < individualContainersRes[namespaceRes].containers.limits.mem) {
+            var a = individualContainersRes[namespaceRes].containers.limits.mem - docLimits.namespace[namespaceRes].containers.limit.mem
+            console.log("Memory limit is " + a + "  too high")
+            process.exit(1)
+        }
+        else if (docLimits.namespace[namespaceRes].containers.request.cpu < individualContainersRes[namespaceRes].containers.requests.cpu) {
+            var a = individualContainersRes[namespaceRes].containers.requests.cpu - docLimits[namespaceRes].containers.request.cpu
+            console.log("CPU request is " + a + " too high")
+            process.exit(1)
+        }
+        else if (docLimits.namespace[namespaceRes].containers.request.mem < individualContainersRes[namespaceRes].containers.requests.mem) {
+            var a = individualContainersRes[namespaceRes].containers.requests.mem - docLimits[namespaceRes].containers.request.mem
+            console.log("Memory request is " + a + "  too high")
+            process.exit(1)
+        } else {
+            console.log("Total Container Requirements OK!")
+        }
+        if (docLimits.namespace[namespaceRes].containers.limit.cpu < individualContainersRes[namespaceRes].initContainers.limits.cpu) {
+            var a = individualContainersRes[namespaceRes].initContainers.limits.cpu - docLimits[namespaceRes].initContainers.limit.cpu
+            console.log("CPU limit is " + a + "  too high")
+            process.exit(1)
+        }
+        else if (docLimits.namespace[namespaceRes].containers.limit.mem < individualContainersRes[namespaceRes].initContainers.limits.mem) {
+            var a = individualContainersRes[namespaceRes].initContainers.limits.mem - docLimits[namespaceRes].initContainers.limit.mem
+            console.log("Memory limit is " + a + " too high")
+            process.exit(1)
+        }
+        else if (docLimits.namespace[namespaceRes].containers.request.cpu < individualContainersRes[namespaceRes].initContainers.requests.cpu) {
+            var a = individualContainersRes[namespaceRes].initContainers.requests.cpu - docLimits[namespaceRes].initContainers.request.cpu
+            console.log("CPU request is " + a + " too high")
+            process.exit(1)
+        }
+        else if (docLimits.namespace[namespaceRes].containers.request.mem < individualContainersRes[namespaceRes].initContainers.requests.mem) {
+            var a = individualContainersRes[namespaceRes].initContainers.requests.cpu - docLimits[namespaceRes].initContainers.request.cpu
+            console.log("Memory request is " + a + " too high")
+            process.exit(1)
+        }
+        else {
+            console.log("Total Init Container Requirements OK!")
         }
     }
-    for (let container in docLimits.namespace) {
-        let limCpu = parseToInt(docLimits.namespace[container].containers.limits.cpu)
-        let reqCpu = parseToInt(docLimits.namespace[container].template.containers[container].resources.requests.cpu)
-        let limMem = parseToInt(docLimits.namespace[container].template.containers[container].resources.limits.memory)
-        let reqMem = parseToInt(docLimits.namespace[container].template.spec.containers[container].resources.requests.memory)
 
-        individualContainersLim[docLimits.metadata.namespace].totals.limits.cpu += limCpu
-        individualContainersLim[docLimits.metadata.namespace].totals.requests.cpu += reqCpu
-        individualContainersLim[docLimits.metadata.namespace].totals.limits.memory += limMem
-        individualContainersLim[docLimits.metadata.namespace].totals.requests.memory += reqMem
-
-        //totalResources.limits.cpu += limCpu
-        //totalResources.requests.cpu += reqCpu
-        //totalResources.limits.memory += limMem
-        //totalResources.requests.memory += reqMem
+    if (totalResources.limits.cpu > totalLimits.limits.cpu) {
+        var a = totalResources.limits.cpu - totalLimits.limits.cpu
+        console.log("CPU limit is " + a + " CPU too high")
+        process.exit(1)
     }
-
-    for (let initContainer in docLimits.namespace) {
-        let limCpu = parseToInt(docLimits.spec.template.spec.containers[initContainer].resources.limits.cpu)
-        let reqCpu = parseToInt(docLimits.spec.template.spec.containers[initContainer].resources.requests.cpu)
-        let limMem = parseToInt(docLimits.spec.template.spec.containers[initContainer].resources.limits.memory)
-        let reqMem = parseToInt(docLimits.spec.template.spec.containers[initContainer].resources.requests.memory)
-
-        individualContainersLim[docLimits.metadata.namespace].totals.limits.cpu += limCpu
-        individualContainersLim[docLimits.metadata.namespace].totals.requests.cpu += reqCpu
-        individualContainersLim[docLimits.metadata.namespace].totals.limits.memory += limMem
-        individualContainersLim[docLimits.metadata.namespace].totals.requests.memory += reqMem
-
-        //totalResources.limits.cpu += limCpu
-        //totalResources.requests.cpu += reqCpu
-        //totalResources.limits.memory += limMem
-        //totalResources.requests.memory += reqMem
+    else if (totalResources.limits.memory > totalLimits.limits.memory) {
+        var b = totalResources.limits.memory - totalLimits.limits.memory
+        console.log("Memory limit is " + b + " too high")
+        process.exit(1)
+    }
+    else if (totalResources.requests.cpu > totalLimits.requests.cpu) {
+        var c = totalResources.requests.cpu - totalLimits.requests.cpu
+        console.log("CPU request is " + c + " CPU too high")
+        process.exit(1)
+    }
+    else if (totalResources.requests.memory > totalLimits.requests.memory) {
+        var d = totalResources.requests.memory - totalLimits.requests.memory
+        console.log("Memory is " + d + " too high")
+        process.exit(1)
+    }
+    else {
+        console.log("All namespaces")
+        console.log("Total Namespace Requirements OK!")
+        process.exit(0)
     }
 }
 
 
 
-for (let document in docLimits) {
-    for (let container in docLimits[document].spec.template.spec.containers) {
-        individualContainersLim[docLimits[document].metadata.namespace].containers.limits.cpu += parseToInt(docLimits[document].spec.template.spec.containers[container].resources.limits.cpu)
-        individualContainersLim[docLimits[document].metadata.namespace].containers.requests.cpu += parseToInt(docLimits[document].spec.template.spec.containers[container].resources.requests.cpu)
-        individualContainersLim[docLimits[document].metadata.namespace].containers.limits.memory += parseToInt(docLimits[document].spec.template.spec.containers[container].resources.limits.memory)
-        individualContainersLim[docLimits[document].metadata.namespace].containers.requests.memory += parseToInt(docLimits[document].spec.template.spec.containers[container].resources.requests.memory)
-    }
-    for (let initContainer in docLimits[document].spec.template.spec.initContainers) {
-        individualContainersLim[docLimits[document].metadata.namespace].initContainers.limits.cpu += parseToInt(docLimits[document].spec.template.spec.initContainers[initContainer].resources.limits.cpu)
-        individualContainersLim[docLimits[document].metadata.namespace].initContainers.requests.cpu += parseToInt(docLimits[document].spec.template.spec.initContainers[initContainer].resources.requests.cpu)
-        individualContainersLim[docLimits[document].metadata.namespace].initContainers.limits.memory += parseToInt(docLimits[document].spec.template.spec.initContainers[initContainer].resources.limits.memory)
-        individualContainersLim[docLimits[document].metadata.namespace].initContainers.requests.memory += parseToInt(docLimits[document].spec.template.spec.initContainers[initContainer].resources.requests.memory)
-    }
-}
+// function check() {
+//     for (let namespaceRes in individualContainersRes) {
+//         console.log(namespaceRes)
 
-for (let namespace in docLimits.namespace) {
+//         //each container resources
+//         // for (let containerRes in individualContainersRes[namespaceRes].containers) {
+//         //     //for (let containerLim in docLimits.namespace[namespaceLi].containers) 
+//         //         //console.log(typeof containerRes)
+//         console.log(individualContainersRes[namespaceRes].containers)
 
+//     }
+// }
 
-
-
-}
-console.log(individualContainersRec)
-console.log(individualContainersRec.namespace1)
-console.log(individualContainersRec.namespace2)
 
 check()
