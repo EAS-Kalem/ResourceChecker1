@@ -47,6 +47,7 @@ let totalLimits = {
 };
 
 //Check Function
+let errors = []
 
 //Each Namespace Resources
 let individualContainersRes = {}
@@ -82,10 +83,22 @@ for (let document in docResources) {
                     cpu: 0,
                     memory: 0
                 }
+            },
+            sidecars: {
+                limits: {
+                    cpu: 0,
+                    memory: 0
+                },
+                requests: {
+                    cpu: 0,
+                    memory: 0
+                }
             }
-
         }
     }
+
+
+
 
     for (let container in docResources[document].spec.template.spec.containers) {
         let limCpu = parseToInt(docResources[document].spec.template.spec.containers[container].resources.limits.cpu)
@@ -130,102 +143,108 @@ for (let document in docResources) {
         totalResources.limits.memory += limMem
         totalResources.requests.memory += reqMem
     }
-}
 
-//check function for container, initContainer and totals
-function check() {
-    console.log("~~~~~~~~~~~~~~~~~~~~STARTING RESOURCE CHECK~~~~~~~~~~~~~~~~~~~~")
-    //each namespace
-    for (let namespaceRes in individualContainersRes) {
-        console.log("Checking " + namespaceRes)
-        if (docLimits.namespace[namespaceRes].containers.limit.cpu < individualContainersRes[namespaceRes].containers.limits.cpu) {
-            var a = individualContainersRes[namespaceRes].containers.limits.cpu - docLimits.namespace[namespaceRes].containers.limit.cpu
-            console.log("CPU limit is " + a + " too high")
-            process.exit(1)
+    individualContainersRes[docResources[document].metadata.namespace].sidecars.requests.cpu += parseToInt(docResources[document].spec.template.metadata.annotations['sidecar.istio.io/proxyCPU'])
+    individualContainersRes[docResources[document].metadata.namespace].sidecars.limits.cpu += parseToInt(docResources[document].spec.template.metadata.annotations['sidecar.istio.io/proxyCPULimit'])
+    individualContainersRes[docResources[document].metadata.namespace].sidecars.requests.memory += parseToInt(docResources[document].spec.template.metadata.annotations['sidecar.istio.io/proxyMemory'])
+    individualContainersRes[docResources[document].metadata.namespace].sidecars.limits.memory += parseToInt(docResources[document].spec.template.metadata.annotations['sidecar.istio.io/proxyMemoryLimit'])
+
+    //check function for container, initContainer and totals
+    function check() {
+        console.log("~~~~~~~~~~~~~~~~~~~~STARTING RESOURCE CHECK~~~~~~~~~~~~~~~~~~~~")
+        //each namespace
+        for (let namespaceRes in individualContainersRes) {
+            console.log("Checking " + namespaceRes + " 📈")
+            //Containers
+            if (docLimits.namespace[namespaceRes].containers.limit.cpu < individualContainersRes[namespaceRes].containers.limits.cpu) {
+                var a = individualContainersRes[namespaceRes].containers.limits.cpu - docLimits.namespace[namespaceRes].containers.limit.cpu
+                errors.push(namespaceRes + " Continers CPU limit is " + a + " too high")
+            }
+            if (docLimits.namespace[namespaceRes].containers.limit.mem < individualContainersRes[namespaceRes].containers.limits.mem) {
+                var a = individualContainersRes[namespaceRes].containers.limits.mem - docLimits.namespace[namespaceRes].containers.limit.mem
+                errors.push(namespaceRes + " Continers memory limit is " + a + "  too high")
+            }
+            if (docLimits.namespace[namespaceRes].containers.request.cpu < individualContainersRes[namespaceRes].containers.requests.cpu) {
+                var a = individualContainersRes[namespaceRes].containers.requests.cpu - docLimits[namespaceRes].containers.request.cpu
+                errors.push(namespaceRes + " Continers CPU request is " + a + " too high")
+            }
+            if (docLimits.namespace[namespaceRes].containers.request.mem < individualContainersRes[namespaceRes].containers.requests.mem) {
+                var a = individualContainersRes[namespaceRes].containers.requests.mem - docLimits[namespaceRes].containers.request.mem
+                errors.push(namespaceRes + " Continers memory request is " + a + "  too high")
+            } else {
+                console.log("Total Container Requirements OK!")
+            }
+            //Init Containers
+            if (docLimits.namespace[namespaceRes].containers.limit.cpu < individualContainersRes[namespaceRes].initContainers.limits.cpu) {
+                var a = individualContainersRes[namespaceRes].initContainers.limits.cpu - docLimits[namespaceRes].initContainers.limit.cpu
+                errors.push(namespaceRes + " Init Containers CPU limit is " + a + "  too high")
+            }
+            if (docLimits.namespace[namespaceRes].containers.limit.mem < individualContainersRes[namespaceRes].initContainers.limits.mem) {
+                var a = individualContainersRes[namespaceRes].initContainers.limits.mem - docLimits[namespaceRes].initContainers.limit.mem
+                errors.push(namespaceRes + " Init Containers memory limit is " + a + " too high")
+            }
+            if (docLimits.namespace[namespaceRes].containers.request.cpu < individualContainersRes[namespaceRes].initContainers.requests.cpu) {
+                var a = individualContainersRes[namespaceRes].initContainers.requests.cpu - docLimits[namespaceRes].initContainers.request.cpu
+                errors.push(namespaceRes + " Init Containers CPU request is " + a + " too high")
+            }
+            if (docLimits.namespace[namespaceRes].containers.request.mem < individualContainersRes[namespaceRes].initContainers.requests.mem) {
+                var a = individualContainersRes[namespaceRes].initContainers.requests.mem - docLimits[namespaceRes].initContainers.request.mem
+                errors.push(namespaceRes + " Init Containers memory request is " + a + " too high")
+            }
+            else {
+                console.log("Total Init Container Requirements OK!")
+            }
+            //Sidecars
+            if (docLimits.namespace[namespaceRes].sidecars.limit.cpu < individualContainersRes[namespaceRes].sidecars.limits.cpu) {
+                var a = individualContainersRes[namespaceRes].sidecars.limits.cpu - docLimits[namespaceRes].sidecars.limit.cpu
+                errors.push(namespaceRes + " Sidecars CPU limit is " + a + "  too high")
+            }
+            if (docLimits.namespace[namespaceRes].sidecars.limit.mem < individualContainersRes[namespaceRes].sidecars.limits.memory) {
+                var a = individualContainersRes[namespaceRes].sidecars.limits.memory - docLimits[namespaceRes].sidecars.limit.mem
+                errors.push(namespaceRes + " Sidecars memory limit is " + a + " too high")
+            }
+            if (docLimits.namespace[namespaceRes].sidecars.request.cpu < individualContainersRes[namespaceRes].sidecars.requests.cpu) {
+                var a = individualContainersRes[namespaceRes].sidecars.requests.cpu - docLimits[namespaceRes].sidecars.request.cpu
+                errors.push(namespaceRes + " Sidecars CPU request is " + a + " too high")
+            }
+            if (docLimits.namespace[namespaceRes].sidecars.request.mem < individualContainersRes[namespaceRes].sidecars.requests.memory) {
+                var a = individualContainersRes[namespaceRes].sidecars.requests.memory - docLimits[namespaceRes].sidecars.request.cpu
+                errors.push(namespaceRes + " Sidecars memory request is " + a + " too high")
+            }
+            else {
+                console.log("Total Sidecar Requirements OK!")
+            }
+
+            if (totalResources.limits.cpu > totalLimits.limits.cpu) {
+                var a = totalResources.limits.cpu - totalLimits.limits.cpu
+                errors.push(namespaceRes + " Total CPU limit is " + a + " too high")
+            }
+            if (totalResources.limits.memory > totalLimits.limits.memory) {
+                var b = totalResources.limits.memory - totalLimits.limits.memory
+                errors.push(namespaceRes + " Total memory limit is " + b + " too high")
+            }
+            if (totalResources.requests.cpu > totalLimits.requests.cpu) {
+                var c = totalResources.requests.cpu - totalLimits.requests.cpu
+                errors.push(namespaceRes + " Total CPU request is " + c + " too high")
+            }
+            if (totalResources.requests.memory > totalLimits.requests.memory) {
+                var d = totalResources.requests.memory - totalLimits.requests.memory
+                errors.push(namespaceRes + " Total memory request is " + d + " too high")
+            }
+            else {
+                console.log("Checking All Namespaces" + " 🌍")
+                console.log("Total Namespace Requirements OK!")
+
+            }
         }
-        else if (docLimits.namespace[namespaceRes].containers.limit.mem < individualContainersRes[namespaceRes].containers.limits.mem) {
-            var a = individualContainersRes[namespaceRes].containers.limits.mem - docLimits.namespace[namespaceRes].containers.limit.mem
-            console.log("Memory limit is " + a + "  too high")
-            process.exit(1)
-        }
-        else if (docLimits.namespace[namespaceRes].containers.request.cpu < individualContainersRes[namespaceRes].containers.requests.cpu) {
-            var a = individualContainersRes[namespaceRes].containers.requests.cpu - docLimits[namespaceRes].containers.request.cpu
-            console.log("CPU request is " + a + " too high")
-            process.exit(1)
-        }
-        else if (docLimits.namespace[namespaceRes].containers.request.mem < individualContainersRes[namespaceRes].containers.requests.mem) {
-            var a = individualContainersRes[namespaceRes].containers.requests.mem - docLimits[namespaceRes].containers.request.mem
-            console.log("Memory request is " + a + "  too high")
-            process.exit(1)
-        } else {
-            console.log("Total Container Requirements OK!")
-        }
-        if (docLimits.namespace[namespaceRes].containers.limit.cpu < individualContainersRes[namespaceRes].initContainers.limits.cpu) {
-            var a = individualContainersRes[namespaceRes].initContainers.limits.cpu - docLimits[namespaceRes].initContainers.limit.cpu
-            console.log("CPU limit is " + a + "  too high")
-            process.exit(1)
-        }
-        else if (docLimits.namespace[namespaceRes].containers.limit.mem < individualContainersRes[namespaceRes].initContainers.limits.mem) {
-            var a = individualContainersRes[namespaceRes].initContainers.limits.mem - docLimits[namespaceRes].initContainers.limit.mem
-            console.log("Memory limit is " + a + " too high")
-            process.exit(1)
-        }
-        else if (docLimits.namespace[namespaceRes].containers.request.cpu < individualContainersRes[namespaceRes].initContainers.requests.cpu) {
-            var a = individualContainersRes[namespaceRes].initContainers.requests.cpu - docLimits[namespaceRes].initContainers.request.cpu
-            console.log("CPU request is " + a + " too high")
-            process.exit(1)
-        }
-        else if (docLimits.namespace[namespaceRes].containers.request.mem < individualContainersRes[namespaceRes].initContainers.requests.mem) {
-            var a = individualContainersRes[namespaceRes].initContainers.requests.cpu - docLimits[namespaceRes].initContainers.request.cpu
-            console.log("Memory request is " + a + " too high")
+        if (errors.length >= 1) {
+            console.log(errors)
             process.exit(1)
         }
         else {
-            console.log("Total Init Container Requirements OK!")
+            console.log("Chicken Dinner!")
+            process.exit(0)
         }
     }
-
-    if (totalResources.limits.cpu > totalLimits.limits.cpu) {
-        var a = totalResources.limits.cpu - totalLimits.limits.cpu
-        console.log("CPU limit is " + a + " CPU too high")
-        process.exit(1)
-    }
-    else if (totalResources.limits.memory > totalLimits.limits.memory) {
-        var b = totalResources.limits.memory - totalLimits.limits.memory
-        console.log("Memory limit is " + b + " too high")
-        process.exit(1)
-    }
-    else if (totalResources.requests.cpu > totalLimits.requests.cpu) {
-        var c = totalResources.requests.cpu - totalLimits.requests.cpu
-        console.log("CPU request is " + c + " CPU too high")
-        process.exit(1)
-    }
-    else if (totalResources.requests.memory > totalLimits.requests.memory) {
-        var d = totalResources.requests.memory - totalLimits.requests.memory
-        console.log("Memory is " + d + " too high")
-        process.exit(1)
-    }
-    else {
-        console.log("All namespaces")
-        console.log("Total Namespace Requirements OK!")
-        process.exit(0)
-    }
 }
-
-
-
-// function check() {
-//     for (let namespaceRes in individualContainersRes) {
-//         console.log(namespaceRes)
-
-//         //each container resources
-//         // for (let containerRes in individualContainersRes[namespaceRes].containers) {
-//         //     //for (let containerLim in docLimits.namespace[namespaceLi].containers) 
-//         //         //console.log(typeof containerRes)
-//         console.log(individualContainersRes[namespaceRes].containers)
-
-//     }
-// }
-
-
 check()
